@@ -1,4 +1,4 @@
-#define MASTER_LEFT
+#define EE_HANDS
 
 #define SERIAL_USART_FULL_DUPLEX   // Enable full duplex operation mode.
 #define SERIAL_USART_TX_PIN GP0     // USART TX pin
@@ -8,3 +8,9 @@
 #define MATRIX_COL_PINS { GP3, GP4, GP5, GP6, GP7 }
 #define MATRIX_ROW_PINS_RIGHT { GP7, GP8, GP9, GP10 }
 #define MATRIX_COL_PINS_RIGHT { GP2, GP3, GP4, GP5, GP6 }
+
+#define BOOTMAGIC_ROW_RIGHT 4
+#define BOOTMAGIC_COLUMN_RIGHT 0
+
+#define TAPPING_TERM 175
+#define TAPPING_TERM_PER_KEY

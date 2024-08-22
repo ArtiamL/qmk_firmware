@@ -1,6 +1,8 @@
 // Copyright 2023 QMK
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include "action.h"
+#include "keycodes.h"
 #include QMK_KEYBOARD_H
 
 bool is_alt_tab_active = false; // ADD this near the beginning of keymap.c
@@ -18,8 +20,72 @@ enum combos {
   SD_LAYER
 };
 
+enum layer_names {
+  _BASE,
+  _GAMING,
+  _PROG
+};
+
+/* typedef enum {
+    TD_NONE,
+    TD_UNKNOWN,
+    TD_SINGLE_TAP,
+    TD_SINGLE_HOLD,
+    TD_DOUBLE_TAP,
+    TD_DOUBLE_HOLD,
+    TD_DOUBLE_SINGLE_TAP, // Send two single taps
+    TD_TRIPLE_TAP,
+    TD_TRIPLE_HOLD
+} td_state_t;
+
+typedef struct {
+    bool is_press_action;
+    td_state_t state;
+} td_tap_t;
+
+enum {
+    K_LBRC,
+    SOME_OTHER_DANCE
+};
+
+td_state_t cur_dance(tap_dance_state_t *state);
+
+// For the x tap dance. Put it here so it can be used in any keymap
+void k_finished(tap_dance_state_t *state, void *user_data);
+void k_reset(tap_dance_state_t *state, void *user_data); */
+
+enum {
+  TD_K_LBRC,
+  TD_L_RBRC,
+  TD_123,
+  TD_456,
+  TD_789
+};
+
+void numDance_123(tap_dance_state_t *state, void *user_data) {
+  switch (state->count) {
+    case 1:
+      tap_code(KC_1);
+      break;
+    case 2:
+      tap_code(KC_2);
+      break;
+    case 3:
+      tap_code(KC_3);
+      break;
+  }
+}
+
+tap_dance_action_t tap_dance_actions[] = {
+  [TD_K_LBRC] = ACTION_TAP_DANCE_DOUBLE(KC_K, KC_LBRC),
+  [TD_L_RBRC] = ACTION_TAP_DANCE_DOUBLE(KC_L, KC_RBRC),
+  [TD_123] = ACTION_TAP_DANCE_FN(numDance_123),
+  [TD_456] = ACTION_TAP_DANCE_FN(numDance_456),
+  [TD_789] = ACTION_TAP_DANCE_FN(numDance_789)
+}
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
-     /*
+    /*
       * ┌───┬───┬───┬───┬───┐       ┌───┬───┬───┬───┬───┐
       * │ Q │ W │ E │ R │ T │       │ Y │ U │ I │ O │ P │
       * ├───┼───┼───┼───┼───┤       ├───┼───┼───┼───┼───┤
@@ -28,62 +94,50 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
       * │ Z │ X │ C │ V │ B │       │ N │ M │ , │ . │ / │
       * └───┴───┴───┴───┴───┘       └───┴───┴───┴───┴───┘
       *           ┌───┐                   ┌───┐
-      *           │GUI├───┐           ┌───┤Alt│
-      *           └───┤Bsp├───┐   ┌───┤Ent├───┘
-      *               └───┤   │   │   ├───┘
+      *           │SFT├───┐           ┌───┤LYR│
+      *           └───┤SPC├───┐   ┌───┤BSP├───┘
+      *               └───┤CTL│   │ENT├───┘
       *                   └───┘   └───┘
       */
-    [0] = LAYOUT_split_3x5_3(
-        KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,                               KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
-        KC_A,    KC_S,    KC_D,    KC_F,    KC_G,                               KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN,
-        KC_Z,    LT(0,KC_X),    LT(0,KC_C),    LT(0,KC_V),    KC_B,                               KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,
-                                   KC_LCTL, KC_SPC, KC_LSFT,           KC_ENT,  KC_BSPC,  KC_RALT
-    )
-
-    /* [1] = LAYOUT_split_3x5_3(
+    [_BASE] = LAYOUT_split_3x5_3(
         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,                               KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
         KC_A,    KC_S,    KC_D,    KC_F,    KC_G,                               KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN,
         KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,                               KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,
-                                   MEH_T(KC_LGUI), KC_SPC, KC_BSPC,           KC_BSPC,  KC_ENT,  KC_RALT
-    ) */
+                            KC_SHIFT, ALT_T(KC_SPC), KC_LCTL,           KC_BSPC,  KC_ENT,  MO(_GAMING)
+    ),
+
+    [_GAMING] = LAYOUT_split_3x5_3(
+        KC_TAB,     KC_Q,    KC_W,    KC_E,    KC_R,                               KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,
+        KC_SHIFT,   KC_A,    KC_S,    KC_D,    KC_F,                               KC_G,    KC_H,    KC_J,    KC_K,    KC_L,
+        KC_LCTL,    KC_Z,    KC_X,    KC_C,    KC_V,                               KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,
+                                  KC_SHIFT, KC_LCTL, KC_SPC,           KC_ENT,  KC_BSPC,  KC_RALT
+    ),
+
+    [_PROG] = LAYOUT_split_3x5_3(
+        KC_TAB,     KC_Q,    KC_W,    KC_E,    KC_R,                               KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,
+        KC_SHIFT,   KC_A,    KC_S,    KC_D,    KC_F,                               KC_G,    KC_H,    KC_J,    KC_K,    KC_L,
+        KC_LCTL,    KC_Z,    KC_X,    KC_C,    KC_V,                               KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,
+                                  KC_SHIFT, KC_LCTL, KC_SPC,           KC_ENT,  KC_BSPC,  KC_RALT
+    ),
 };
 
 const uint16_t PROGMEM ab_combo[] = {KC_A, KC_B, COMBO_END};
 const uint16_t PROGMEM as_combo[] = {KC_A, KC_S, COMBO_END};
 const uint16_t PROGMEM qw_combo[] = {KC_Q, KC_W, COMBO_END};
 const uint16_t PROGMEM zx_combo[] = {KC_Z, KC_X, COMBO_END};
-const uint16_t PROGMEM sd_combo[] = {KC_S, KC_D, COMBO_END};
+const uint16_t PROGMEM sg_combo[] = {KC_S, KC_G, COMBO_END};
 
 combo_t key_combos[] = {
   [AB_ESC] = COMBO(ab_combo, KC_ESC),
   [AS_TAB] = COMBO(as_combo, KC_TAB),
   [QW_ALTTAB] = COMBO(qw_combo, ALT_TAB),
   [ZX_LGUI] = COMBO(zx_combo, KC_LGUI),
-  //[SD_LAYER] = COMBO(sd_combo, MO(_LAYER)),
+  [VB_LAYER] = COMBO(vb_combo, OSL(1)),
+  [SG_LAYER] = COMBO(sg_combo, MO(1)),
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   switch (keycode) { // This will do most of the grunt work with the keycodes.
-    case LT(0,KC_X):
-        if (!record->tap.count && record->event.pressed) {
-            tap_code16(C(KC_X)); // Intercept hold function to send Ctrl-X
-            return false;
-        }
-        return true;             // Return true for normal processing of tap keycode
-
-    case LT(0,KC_C):
-        if (!record->tap.count && record->event.pressed) {
-            tap_code16(C(KC_C)); // Intercept hold function to send Ctrl-C
-            return false;
-        }
-        return true;             // Return true for normal processing of tap keycode
-
-    case LT(0,KC_V):
-        if (!record->tap.count && record->event.pressed) {
-            tap_code16(C(KC_V)); // Intercept hold function to send Ctrl-V
-            return false;
-        }
-        return true;
         
     case ALT_TAB:
       if (record->event.pressed) {
