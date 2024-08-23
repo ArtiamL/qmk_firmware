@@ -1,12 +1,23 @@
 // Copyright 2023 QMK
 // SPDX-License-Identifier: GPL-2.0-or-later
 
+#include <stdint.h>
+#include <strings.h>
 #include "action.h"
 #include "keycodes.h"
+#include "process_tap_dance.h"
+#include "quantum_keycodes.h"
+#include "keymap_uk.h"
 #include QMK_KEYBOARD_H
 
 bool is_alt_tab_active = false; // ADD this near the beginning of keymap.c
 uint16_t alt_tab_timer = 0;     // we will be using them soon.
+
+typedef struct {
+  uint16_t tap;
+  uint16_t hold;
+  uint16_t held;
+} td_tap_hold_t;
 
 enum custom_keycodes {
   ALT_TAB = SAFE_RANGE,
@@ -24,46 +35,56 @@ enum combos {
 enum layer_names {
   _BASE,
   _GAMING,
+  _GAMING_NUMS,
   _PROG
 };
 
-/* typedef enum {
-    TD_NONE,
-    TD_UNKNOWN,
-    TD_SINGLE_TAP,
-    TD_SINGLE_HOLD,
-    TD_DOUBLE_TAP,
-    TD_DOUBLE_HOLD,
-    TD_DOUBLE_SINGLE_TAP, // Send two single taps
-    TD_TRIPLE_TAP,
-    TD_TRIPLE_HOLD
-} td_state_t;
+void tap_dance_tap_hold_finished(tap_dance_state_t *state, void *user_data) {
+  td_tap_hold_t *tap_hold = (td_tap_hold_t *)user_data;
 
-typedef struct {
-    bool is_press_action;
-    td_state_t state;
-} td_tap_t;
+  if (state->pressed) {
+    if (state->count == 1
+#ifndef PERMISSIVE_HOLD
+      && !state->interrupted
+#endif
+    ) {
+      register_code16(tap_hold->hold);
+      tap_hold->held = tap_hold->hold;
+    } else {
+      register_code16(tap_hold->tap);
+      tap_hold->held = tap_hold->tap;
+  }
+  }
+}
 
-enum {
-    K_LBRC,
-    SOME_OTHER_DANCE
-};
+void tap_dance_tap_hold_reset(tap_dance_state_t *state, void *user_data) {
+  td_tap_hold_t *tap_hold = (td_tap_hold_t *)user_data;
 
-td_state_t cur_dance(tap_dance_state_t *state);
+  if (tap_hold->held) {
+    unregister_code16(tap_hold->held);
+    tap_hold->held = 0;
+  }
+}
 
-// For the x tap dance. Put it here so it can be used in any keymap
-void k_finished(tap_dance_state_t *state, void *user_data);
-void k_reset(tap_dance_state_t *state, void *user_data); */
+#define ACTION_TAP_DANCE_TAP_HOLD(tap, hold) \
+    { .fn = {NULL, tap_dance_tap_hold_finished, tap_dance_tap_hold_reset}, .user_data = (void *)&((td_tap_hold_t){tap, hold, 0}), }
 
 enum {
   TD_K_LBRC,
   TD_L_RBRC,
   TD_123,
   TD_456,
-  TD_789
+  TD_789,
+  MINS_UNDS,
+  EQL_PLS,
+  LBRC_LCBR,
+  RBRC_RCBR,
+  BSLS_PIPE,
+  NUHS_TILD,
+  QUOT_AT
 };
 
-void numDance(tap_dance_state_t *state, void *user_data) {
+void numDance123(tap_dance_state_t *state, void *user_data) {
   switch (state->count) {
     case 1:
       tap_code(KC_1);
@@ -77,12 +98,47 @@ void numDance(tap_dance_state_t *state, void *user_data) {
   }
 }
 
+void numDance456(tap_dance_state_t *state, void *user_data) {
+  switch (state->count) {
+    case 1:
+      tap_code(KC_4);
+      break;
+    case 2:
+      tap_code(KC_5);
+      break;
+    case 3:
+      tap_code(KC_6);
+      break;
+  }
+}
+
+void numDance789(tap_dance_state_t *state, void *user_data) {
+  switch (state->count) {
+    case 1:
+      tap_code(KC_7);
+      break;
+    case 2:
+      tap_code(KC_8);
+      break;
+    case 3:
+      tap_code(KC_9);
+      break;
+  }
+}
+
 tap_dance_action_t tap_dance_actions[] = {
   [TD_K_LBRC] = ACTION_TAP_DANCE_DOUBLE(KC_K, KC_LBRC),
   [TD_L_RBRC] = ACTION_TAP_DANCE_DOUBLE(KC_L, KC_RBRC),
-  [TD_123] = ACTION_TAP_DANCE_FN(numDance),
-  [TD_456] = ACTION_TAP_DANCE_FN(numDance),
-  [TD_789] = ACTION_TAP_DANCE_FN(numDance)
+  [TD_123] = ACTION_TAP_DANCE_FN(numDance123),
+  [TD_456] = ACTION_TAP_DANCE_FN(numDance456),
+  [TD_789] = ACTION_TAP_DANCE_FN(numDance789),
+  [MINS_UNDS] = ACTION_TAP_DANCE_TAP_HOLD(KC_MINS, KC_UNDS),
+  [EQL_PLS] = ACTION_TAP_DANCE_TAP_HOLD(KC_EQL, KC_PLUS),
+  [LBRC_LCBR] = ACTION_TAP_DANCE_TAP_HOLD(KC_LBRC, KC_LCBR),
+  [RBRC_RCBR] = ACTION_TAP_DANCE_TAP_HOLD(KC_RBRC, KC_RCBR),
+  [BSLS_PIPE] = ACTION_TAP_DANCE_TAP_HOLD(UK_BSLS, UK_PIPE),
+  [NUHS_TILD] = ACTION_TAP_DANCE_TAP_HOLD(UK_HASH, UK_TILD),
+  [QUOT_AT] = ACTION_TAP_DANCE_TAP_HOLD(UK_QUOT, UK_AT)
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -104,21 +160,28 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,                               KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
         KC_A,    KC_S,    KC_D,    KC_F,    KC_G,                               KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN,
         KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,                               KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,
-                            KC_LSFT, ALT_T(KC_SPC), KC_LCTL,           KC_BSPC,  KC_ENT,  TG(_GAMING)
+                            KC_LSFT, ALT_T(KC_SPC), KC_LCTL,           KC_BSPC,  KC_ENT,  MO(_PROG)
     ),
 
     [_GAMING] = LAYOUT_split_3x5_3(
         KC_TAB,     KC_Q,    KC_W,    KC_E,    KC_R,                               KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,
         KC_LSFT,    KC_A,    KC_S,    KC_D,    KC_F,                               KC_G,    KC_H,    KC_J,    KC_K,    KC_L,
-        KC_LCTL,    KC_Z,    KC_X,    KC_C,    KC_V,                               KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,
-                                TD(TD_123), KC_TRNS, KC_SPC,           KC_TRNS,  KC_TRNS,  KC_TRNS
+        KC_LCTL,    KC_Z,    KC_X,    KC_C,    KC_V,                               KC_B,    KC_N,    KC_M,    KC_DOT,  KC_SLSH,
+                                MO(_GAMING_NUMS), KC_SPC, KC_TRNS,           KC_TRNS,  KC_TRNS,  KC_TRNS
+    ),
+
+    [_GAMING_NUMS] = LAYOUT_split_3x5_3(
+        TD(TD_123),    KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,                               KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,
+        TD(TD_456),    KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,                               KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,
+        TD(TD_789),    KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,                               KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,
+                                                  KC_TRNS, KC_TRNS, KC_TRNS,           KC_TRNS,  KC_TRNS,  KC_TRNS
     ),
 
     [_PROG] = LAYOUT_split_3x5_3(
-        KC_TAB,     KC_Q,    KC_W,    KC_E,    KC_R,                               KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,
-        KC_LSFT,    KC_A,    KC_S,    KC_D,    KC_F,                               KC_G,    KC_H,    KC_J,    KC_K,    KC_L,
-        KC_LCTL,    KC_Z,    KC_X,    KC_C,    KC_V,                               KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,
-                                    KC_LSFT, KC_LCTL, KC_SPC,          KC_ENT,  KC_BSPC,  KC_RALT
+        KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,                               TD(MINS_UNDS),    TD(EQL_PLS),    KC_UP,    TD(LBRC_LCBR),    TD(RBRC_RCBR),
+        KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,    KC_TRNS,                               TD(BSLS_PIPE),    KC_LEFT,        KC_DOWN,  KC_RGHT,          TD(NUHS_TILD),
+        KC_1,       KC_2,       KC_3,       KC_4,       KC_5,                                  KC_6,             KC_7,           KC_8,     KC_9,             KC_0,
+                                                KC_TRNS, KC_TRNS, KC_TRNS,           TD(QUOT_AT),  KC_MPLY,  KC_TRNS
     ),
 };
 
@@ -132,25 +195,39 @@ const uint16_t PROGMEM sg_combo[] = {KC_S, KC_G, COMBO_END};
 combo_t key_combos[] = {
   [AB_ESC] = COMBO(ab_combo, KC_ESC),
   [AS_TAB] = COMBO(as_combo, KC_TAB),
-  [QW_ALTTAB] = COMBO(qw_combo, ALT_TAB),
+  //[QW_ALTTAB] = COMBO(qw_combo, ALT_TAB),
   [ZX_LGUI] = COMBO(zx_combo, KC_LGUI),
-  [VB_LAYER] = COMBO(vb_combo, OSL(1)),
-  [SG_LAYER] = COMBO(sg_combo, MO(1)),
+  [VB_LAYER] = COMBO(vb_combo, TG(_GAMING)),
+  //[SG_LAYER] = COMBO(sg_combo, MO(1)),
 };
 
+/* void tap_hold(tap_dance_action_t *action, uint16_t keycode, keyrecord_t *record) {
+  action = &td_actions_hold[QK_TAP_DANCE_GET_INDEX(keycode)];
+  if (!record->event.pressed && action->state.count && !action->state.finished) {
+        td_tap_hold_t *tap_hold = (td_tap_hold_t *)action->user_data;
+        tap_code16(tap_hold->tap);
+  }
+} */
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  tap_dance_action_t *action;
+
+  /* switch (keycode) {
+    case TD()
+  } */
+
   switch (keycode) { // This will do most of the grunt work with the keycodes.
-        
-    case ALT_TAB:
-      if (record->event.pressed) {
-        if (!is_alt_tab_active) {
-          is_alt_tab_active = true;
-          register_code(KC_LALT);
-        }
-        alt_tab_timer = timer_read();
-        register_code(KC_TAB);
-      } else {
-        unregister_code(KC_TAB);
+    case TD(MINS_UNDS):
+    case TD(EQL_PLS):
+    case TD(LBRC_LCBR):
+    case TD(RBRC_RCBR):
+    case TD(BSLS_PIPE):
+    case TD(NUHS_TILD):
+    case TD(QUOT_AT):
+      action = &tap_dance_actions[QK_TAP_DANCE_GET_INDEX(keycode)];
+      if (!record->event.pressed && action->state.count && !action->state.finished) {
+          td_tap_hold_t *tap_hold = (td_tap_hold_t *)action->user_data;
+          tap_code16(tap_hold->tap);
       }
       break;
   }
