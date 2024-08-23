@@ -62,16 +62,16 @@ enum {
   TD_789
 };
 
-void numDance_123(tap_dance_state_t *state, void *user_data) {
+void numDance(uint8_t sequence, tap_dance_state_t *state, void *user_data) {
   switch (state->count) {
     case 1:
-      tap_code(KC_1);
+      tap_code(KC_1 | sequence);
       break;
     case 2:
-      tap_code(KC_2);
+      tap_code(KC_2 | sequence);
       break;
     case 3:
-      tap_code(KC_3);
+      tap_code(KC_3 | sequence);
       break;
   }
 }
@@ -79,9 +79,9 @@ void numDance_123(tap_dance_state_t *state, void *user_data) {
 tap_dance_action_t tap_dance_actions[] = {
   [TD_K_LBRC] = ACTION_TAP_DANCE_DOUBLE(KC_K, KC_LBRC),
   [TD_L_RBRC] = ACTION_TAP_DANCE_DOUBLE(KC_L, KC_RBRC),
-  [TD_123] = ACTION_TAP_DANCE_FN(numDance_123),
-  [TD_456] = ACTION_TAP_DANCE_FN(numDance_456),
-  [TD_789] = ACTION_TAP_DANCE_FN(numDance_789)
+  [TD_123] = ACTION_TAP_DANCE_FN(numDance, 0),
+  [TD_456] = ACTION_TAP_DANCE_FN(numDance),
+  [TD_789] = ACTION_TAP_DANCE_FN(numDance)
 }
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -103,7 +103,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,                               KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
         KC_A,    KC_S,    KC_D,    KC_F,    KC_G,                               KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN,
         KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,                               KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,
-                            KC_SHIFT, ALT_T(KC_SPC), KC_LCTL,           KC_BSPC,  KC_ENT,  MO(_GAMING)
+                            KC_SHIFT, ALT_T(KC_SPC), KC_LCTL,           KC_BSPC,  KC_ENT,  TG(_GAMING)
     ),
 
     [_GAMING] = LAYOUT_split_3x5_3(
