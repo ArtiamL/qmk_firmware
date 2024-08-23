@@ -17,7 +17,8 @@ enum combos {
   AS_TAB,
   QW_ALTTAB,
   ZX_LGUI,
-  SD_LAYER
+  VB_LAYER,
+  SG_LAYER
 };
 
 enum layer_names {
@@ -62,16 +63,16 @@ enum {
   TD_789
 };
 
-void numDance(uint8_t sequence, tap_dance_state_t *state, void *user_data) {
+void numDance(tap_dance_state_t *state, void *user_data) {
   switch (state->count) {
     case 1:
-      tap_code(KC_1 | sequence);
+      tap_code(KC_1);
       break;
     case 2:
-      tap_code(KC_2 | sequence);
+      tap_code(KC_2);
       break;
     case 3:
-      tap_code(KC_3 | sequence);
+      tap_code(KC_3);
       break;
   }
 }
@@ -79,10 +80,10 @@ void numDance(uint8_t sequence, tap_dance_state_t *state, void *user_data) {
 tap_dance_action_t tap_dance_actions[] = {
   [TD_K_LBRC] = ACTION_TAP_DANCE_DOUBLE(KC_K, KC_LBRC),
   [TD_L_RBRC] = ACTION_TAP_DANCE_DOUBLE(KC_L, KC_RBRC),
-  [TD_123] = ACTION_TAP_DANCE_FN(numDance, 0),
+  [TD_123] = ACTION_TAP_DANCE_FN(numDance),
   [TD_456] = ACTION_TAP_DANCE_FN(numDance),
   [TD_789] = ACTION_TAP_DANCE_FN(numDance)
-}
+};
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /*
@@ -103,21 +104,21 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,                               KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,
         KC_A,    KC_S,    KC_D,    KC_F,    KC_G,                               KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN,
         KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,                               KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH,
-                            KC_SHIFT, ALT_T(KC_SPC), KC_LCTL,           KC_BSPC,  KC_ENT,  TG(_GAMING)
+                            KC_LSFT, ALT_T(KC_SPC), KC_LCTL,           KC_BSPC,  KC_ENT,  TG(_GAMING)
     ),
 
     [_GAMING] = LAYOUT_split_3x5_3(
         KC_TAB,     KC_Q,    KC_W,    KC_E,    KC_R,                               KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,
-        KC_SHIFT,   KC_A,    KC_S,    KC_D,    KC_F,                               KC_G,    KC_H,    KC_J,    KC_K,    KC_L,
+        KC_LSFT,    KC_A,    KC_S,    KC_D,    KC_F,                               KC_G,    KC_H,    KC_J,    KC_K,    KC_L,
         KC_LCTL,    KC_Z,    KC_X,    KC_C,    KC_V,                               KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,
-                                  KC_SHIFT, KC_LCTL, KC_SPC,           KC_ENT,  KC_BSPC,  KC_RALT
+                                TD(TD_123), KC_TRNS, KC_SPC,           KC_TRNS,  KC_TRNS,  KC_TRNS
     ),
 
     [_PROG] = LAYOUT_split_3x5_3(
         KC_TAB,     KC_Q,    KC_W,    KC_E,    KC_R,                               KC_T,    KC_Y,    KC_U,    KC_I,    KC_O,
-        KC_SHIFT,   KC_A,    KC_S,    KC_D,    KC_F,                               KC_G,    KC_H,    KC_J,    KC_K,    KC_L,
+        KC_LSFT,    KC_A,    KC_S,    KC_D,    KC_F,                               KC_G,    KC_H,    KC_J,    KC_K,    KC_L,
         KC_LCTL,    KC_Z,    KC_X,    KC_C,    KC_V,                               KC_B,    KC_N,    KC_M,    KC_COMM, KC_DOT,
-                                  KC_SHIFT, KC_LCTL, KC_SPC,           KC_ENT,  KC_BSPC,  KC_RALT
+                                    KC_LSFT, KC_LCTL, KC_SPC,          KC_ENT,  KC_BSPC,  KC_RALT
     ),
 };
 
@@ -125,6 +126,7 @@ const uint16_t PROGMEM ab_combo[] = {KC_A, KC_B, COMBO_END};
 const uint16_t PROGMEM as_combo[] = {KC_A, KC_S, COMBO_END};
 const uint16_t PROGMEM qw_combo[] = {KC_Q, KC_W, COMBO_END};
 const uint16_t PROGMEM zx_combo[] = {KC_Z, KC_X, COMBO_END};
+const uint16_t PROGMEM vb_combo[] = {KC_V, KC_B, COMBO_END};
 const uint16_t PROGMEM sg_combo[] = {KC_S, KC_G, COMBO_END};
 
 combo_t key_combos[] = {
